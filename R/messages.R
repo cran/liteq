@@ -63,15 +63,17 @@ publish <- function(queue, title = "", message = "") {
 #' Blocks and waits for a message if there isn't one to work on currently.
 #'
 #' @param queue The queue object.
+#' @param poll_interval Poll interval in milliseconds. How often to poll
+#'    the queue for new jobs, if none are immediately available.
 #' @return A message.
 #'
 #' @family liteq messages
 #' @seealso [liteq] for examples
 #' @export
 
-consume <- function(queue) {
+consume <- function(queue, poll_interval = 500) {
   assert_that(is_queue(queue))
-  msg <- db_consume(queue$db, queue$name)
+  msg <- db_consume(queue$db, queue$name, poll_interval = poll_interval)
   make_message(msg$msg$id, msg$msg$title, msg$msg$message, msg$db,
                msg$queue, msg$lockdir)
 }
@@ -122,6 +124,34 @@ print.liteq_message <- function(x, ...) {
   msg_bytes <- nchar(x$message, type = "bytes")
   cat("  ", x$title, " (", msg_bytes, " B)\n", sep = "")
   invisible(x)
+}
+
+#' Get the number of messages in a queue.
+#'
+#' @param queue The queue object.
+#' @return Number of messages in the queue.
+#'
+#' @family liteq messages
+#' @seealso [liteq] for examples
+#' @export
+
+message_count <- function(queue) {
+  assert_that(is_queue(queue))
+  db_message_count(queue$db, queue$name)
+}
+
+#' Check if a queue is empty
+#'
+#' @param queue The queue object.
+#' @return Logical, whether the queue is empty.
+#'
+#' @family liteq messages
+#' @seealso [liteq] for examples
+#' @export
+
+is_empty <- function(queue) {
+  assert_that(is_queue(queue))
+  db_is_empty(queue$db, queue$name)
 }
 
 #' List all messages in a queue

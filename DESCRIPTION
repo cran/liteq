@@ -1,6 +1,6 @@
 Package: liteq
 Title: Lightweight Portable Message Queue Using 'SQLite'
-Version: 1.0.1
+Version: 1.1.0
 Author: Gábor Csárdi
 Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 Description: Temporary and permanent message queues for R. Built on top of
@@ -11,11 +11,11 @@ License: MIT + file LICENSE
 LazyData: true
 URL: https://github.com/r-lib/liteq#readme
 BugReports: https://github.com/r-lib/liteq/issues
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 Imports: assertthat, DBI, rappdirs, RSQLite
-Suggests: covr, testthat, withr
+Suggests: callr, covr, processx, testthat, withr
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2017-10-20 17:39:48 UTC; gaborcsardi
+Packaged: 2019-03-08 10:41:18 UTC; gaborcsardi
 Repository: CRAN
-Date/Publication: 2017-10-20 19:47:15 UTC
+Date/Publication: 2019-03-08 13:40:10 UTC

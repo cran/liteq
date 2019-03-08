@@ -4,10 +4,13 @@
 \alias{consume}
 \title{Consume a message from a queue}
 \usage{
-consume(queue)
+consume(queue, poll_interval = 500)
 }
 \arguments{
 \item{queue}{The queue object.}
+
+\item{poll_interval}{Poll interval in milliseconds. How often to poll
+the queue for new jobs, if none are immediately available.}
 }
 \value{
 A message.
@@ -19,9 +22,12 @@ Blocks and waits for a message if there isn't one to work on currently.
 \link{liteq} for examples
 
 Other liteq messages: \code{\link{ack}},
+  \code{\link{is_empty}},
   \code{\link{list_failed_messages}},
-  \code{\link{list_messages}}, \code{\link{publish}},
+  \code{\link{list_messages}}, \code{\link{message_count}},
+  \code{\link{publish}},
   \code{\link{remove_failed_messages}},
   \code{\link{requeue_failed_messages}},
   \code{\link{try_consume}}
 }
+\concept{liteq messages}

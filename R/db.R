@@ -1,11 +1,19 @@
 
+#' @importFrom DBI dbExecute
+
+db_set_timeout <- function(con) {
+  timeout <- as.integer(Sys.getenv("R_LITEQ_BUSY_TIMOUT", "10000"))
+  if (is.na(timeout)) timeout <- 10000
+  dbExecute(con, sprintf("PRAGMA busy_timeout = %d", timeout))
+}
+
 #' @importFrom DBI dbGetQuery sqlInterpolate dbConnect dbDisconnect
 #' @importFrom DBI dbExecute dbWithTransaction
 #' @importFrom RSQLite SQLite
 
 db_connect <- function(..., synchronous = NULL) {
   con <- dbConnect(SQLite(), synchronous = synchronous, ...)
-  dbExecute(con, "PRAGMA busy_timeout = 1000")
+  db_set_timeout(con)
   con
 }
 
@@ -36,13 +44,8 @@ default_db <- function() {
 #' @keywords internal
 
 ensure_db <- function(db) {
-  tryCatch(
-    do_db(db, "SELECT * FROM meta LIMIT 1"),
-    error = function(e) {
-      dir.create(dirname(db), recursive = TRUE, showWarnings = FALSE)
-      db_create_db(db)
-    }
-  )
+  dir.create(dirname(db), recursive = TRUE, showWarnings = FALSE)
+  db_create_db(db)
 }
 
 db_queue_name <- function(name) {
@@ -50,10 +53,12 @@ db_queue_name <- function(name) {
 }
 
 db_query <- function(con, query, ...) {
+  db_set_timeout(con)
   dbGetQuery(con, sqlInterpolate(con, query, ...))
 }
 
 db_execute <- function(con, query, ...) {
+  db_set_timeout(con)
   dbExecute(con, sqlInterpolate(con, query, ...))
 }
 
@@ -70,7 +75,6 @@ do_db_execute <- function(db, query, ...) {
 }
 
 db_lock <- function(con) {
-  dbExecute(con, "PRAGMA busy_timeout = 1000")
   done <- FALSE
   while (!done) {
     tryCatch(
@@ -86,7 +90,7 @@ db_lock <- function(con) {
 db_create_db <- function(db) {
   do_db_execute(
     db,
-    "CREATE TABLE meta (
+    "CREATE TABLE IF NOT EXISTS meta (
        name TEXT PRIMARY KEY,
        created TIMESTAMP,
        lockdir TEXT,
@@ -100,7 +104,7 @@ db_create_db <- function(db) {
 db_ensure_queue <- function(name, db, crash_strategy) {
   con <- db_connect(db)
   on.exit(dbDisconnect(con), add = TRUE)
-  db_execute(con, "BEGIN EXCLUSIVE")
+  db_execute(con, "BEGIN")
   tablename <- db_queue_name(name)
   if (!dbExistsTable(con, tablename)) {
     db_create_queue_locked(db, con, name, crash_strategy)
@@ -127,7 +131,7 @@ db_ensure_queue <- function(name, db, crash_strategy) {
 db_create_queue <- function(name, db, crash_strategy) {
   con <- db_connect(db)
   on.exit(dbDisconnect(con), add = TRUE)
-  db_execute(con, "BEGIN EXCLUSIVE")
+  db_execute(con, "BEGIN")
   db_create_queue_locked(db, con, name, crash_strategy)
 }
 
@@ -354,12 +358,27 @@ db_ack <- function(db, queue, id, lock, success) {
     name = queue
   )$lockdir
 
+  try_silent(dbDisconnect(lock))
   lock <- message_lock_file(lockdir, queue, id)
   unlink(lock)
 
   db_execute(con, "COMMIT")
 
   invisible()
+}
+
+db_message_count <- function(db, queue, failed = FALSE) {
+
+  q <- "SELECT COUNT(id) FROM ?tablename LIMIT 1"
+  if (failed) q <- paste(q, "WHERE status = \"FAILED\"")
+
+  do_db(db, q, tablename = db_queue_name(queue))[1, 1]
+}
+
+db_is_empty <- function(db, queue, failed = FALSE) {
+
+  db_message_count(db = db, queue = queue, failed = failed) < 1
+
 }
 
 db_list_messages <- function(db, queue, failed = FALSE) {
