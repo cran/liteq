@@ -3,7 +3,6 @@
 \docType{package}
 \name{liteq}
 \alias{liteq}
-\alias{liteq-package}
 \title{Lightweight Portable Message Queue Using 'SQLite'}
 \description{
 Message queues for R. Built on top of 'SQLite' databases.
@@ -17,12 +16,14 @@ locked by 'SQLite', the process that tries to access it, must wait until
 it is unlocked. The maximum amount of waiting time is by default 10
 seconds, and it can be changed via the \code{R_LITEQ_BUSY_TIMEOUT}
 environment variable, in milliseconds. If you have many concurrent
-processes using the same liteq database, and see \code{database locked}
+processes using the same liteq database, and see \verb{database locked}
 errors, then you can try to increase the timeout value.
 }
 
 \section{Examples}{
-\preformatted{# We don't run this, because it writes to the cache directory
+
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{# We don't run this, because it writes to the cache directory
 db <- tempfile()
 q <- ensure_queue("jobs", db = db)
 q
@@ -48,9 +49,31 @@ list_messages(q)
 # No more messages
 is_empty(q)
 try_consume(q)
-}
+}\if{html}{\out{</div>}}
 }
 
 \examples{
 ## See the manual page
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/r-lib/liteq#readme}
+  \item Report bugs at \url{https://github.com/r-lib/liteq/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Gábor Csárdi \email{csardi.gabor@gmail.com}
+
+Authors:
+\itemize{
+  \item Gábor Csárdi \email{csardi.gabor@gmail.com}
+}
+
+Other contributors:
+\itemize{
+  \item Posit Software, PBC [copyright holder, funder]
+}
+
 }
